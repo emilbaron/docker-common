@@ -1,0 +1,1 @@
+FROM mcr.microsoft.com/playwright/python:v1.50.0-jammy\n\n# Install curl (required for uv installer)\nRUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*\n\n# Install uv\nRUN curl -LsSf https://astral.sh/uv/install.sh | sh\n\n# Ensure uv is on the PATH\nENV PATH="/root/.local/bin:$PATH"
