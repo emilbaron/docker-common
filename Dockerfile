@@ -11,7 +11,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/usr/local/bin:$PATH"
 
 # Install playwright into the system python using uv and then install the browser
-RUN uv pip install --system playwright && playwright install webkit
+RUN uv pip install --system playwright && playwright install
 
 # Set the browsers path to a shared location
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
