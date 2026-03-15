@@ -1,0 +1,6 @@
+FROM jenkins/jenkins:lts
+USER root
+RUN apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/*
+# Drop back to jenkins user if preferred, but chmod /var/run/docker.sock needs root
+# We'll handle the permissions in the docker-compose command
+USER jenkins
