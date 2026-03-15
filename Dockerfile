@@ -7,10 +7,11 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 ENV UV_INSTALL_DIR="/usr/local/bin"
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Ensure both uv and standard paths are available
+# Ensure uv is on the PATH
 ENV PATH="/usr/local/bin:$PATH"
 
-# Pre-install playwright browser binaries into a shared location
-# Use python3 -m playwright to ensure we use the installed module
+# Install playwright into the system python using uv and then install the browser
+RUN uv pip install --system playwright && playwright install webkit
+
+# Set the browsers path to a shared location
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN python3 -m playwright install webkit
