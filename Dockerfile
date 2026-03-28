@@ -1,46 +1,43 @@
-FROM mcr.microsoft.com/playwright/python:v1.58.0-noble
+FROM mcr.microsoft.com/playwright/python:v1.56.0-noble
 
-ARG DEBIAN_FRONTEND=noninteractive
-ARG TARGETARCH
 ARG TSDUCK_VERSION=3.43-4549
 
-ENV UV_INSTALL_DIR="/usr/local/bin"
-ENV PATH="/usr/local/bin:$PATH"
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Original:
+RUN apt update && \
+    apt install -y \ 
+    iproute2 \
+    jq \
+    ffmpeg \
+    curl \
+    wget && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -sL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" >> /etc/apt/sources.list.d/nodesource.list && \
+    apt update && \
+    apt install nodejs
 
-WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN apt install -y libsrt1.5-openssl libpcsclite1
 
-RUN set -eux; \
-    case "${TARGETARCH:-amd64}" in \
-      amd64) tsduck_arch="amd64" ;; \
-      arm64) tsduck_arch="arm64" ;; \
-      *) echo "Unsupported TARGETARCH: ${TARGETARCH}"; exit 1 ;; \
-    esac; \
-    curl -fsSLo /tmp/tsduck.deb "https://github.com/tsduck/tsduck/releases/download/v${TSDUCK_VERSION}/tsduck_${TSDUCK_VERSION}.ubuntu24_${tsduck_arch}.deb" \
+# # Original:
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
+
+
+# Original TSDuck for Noble:
+RUN curl -Lo /tmp/tsduck.deb \
+    "https://github.com/tsduck/tsduck/releases/download/v${TSDUCK_VERSION}/tsduck_${TSDUCK_VERSION}.ubuntu24_amd64.deb" \
     && apt-get update \
-    && apt-get install -y --no-install-recommends /tmp/tsduck.deb \
-    && rm -f /tmp/tsduck.deb \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y /tmp/tsduck.deb \
+    && rm -rf /tmp/tsduck.deb
 
-RUN uv pip install --system playwright \
-    && playwright install
+#RUN apt-get update && apt-get install -y /tmp/tsduck.deb
 
-COPY pyproject.toml README.md /app/
-COPY src /app/src
+# Delete tsduck .deb file
+#RUN rm -rf /tmp/tsduck.deb
 
-RUN uv pip install --system .
-
-RUN tsp --version
-
-CMD ["python3", "-m", "app"]
+# Remove apt-lists:
+RUN rm -rf /var/lib/apt/lists*
